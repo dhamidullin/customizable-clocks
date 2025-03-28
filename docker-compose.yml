@@ -1,0 +1,8 @@
+services:
+  net-control-web-interface:
+    build: .
+    ports:
+      - "1607:3000"
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
