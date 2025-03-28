@@ -75,7 +75,7 @@ const ToggleButton: React.FC<ToggleButtonProps> = ({ title, isOn, onChange }) =>
         <input
           type="checkbox"
           checked={isOn}
-          onChange={(e) => onChange?.(e.target.checked)}
+          onChange={(e) => onChange?.(!!e.target.checked)}
         />
 
         <span />

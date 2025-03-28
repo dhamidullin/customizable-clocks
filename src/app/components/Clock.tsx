@@ -1,10 +1,11 @@
 'use client'
 
 import { useWindowSize } from '@/hooks/useWindowSize'
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import styled from 'styled-components'
 import { MovementOptions, useClockSettings } from '../contexts/ClockSettingsContext';
 import moment from 'moment'
+import { createImmediateInterval } from '../utils/timer';
 
 interface ClockRootProps {
   size: number;
@@ -17,11 +18,6 @@ interface ClockContainerProps {
 
 interface ClockPivotProps {
   size: number;
-}
-
-interface ClockHandProps extends React.HTMLAttributes<HTMLDivElement> {
-  style?: React.CSSProperties;
-  continiousMovement: boolean;
 }
 
 const ClockContainer = styled.div<ClockContainerProps>`
@@ -54,6 +50,11 @@ const ClockPivot = styled.div<ClockPivotProps>`
   border-radius: 50%;
 `
 
+interface ClockHandProps {
+  style?: React.CSSProperties;
+  visible: boolean;
+}
+
 const ClockHand = styled.div<ClockHandProps>`
   position: absolute;
   bottom: 50%;
@@ -62,7 +63,8 @@ const ClockHand = styled.div<ClockHandProps>`
   height: var(--length);
   background-color: white;
   transform-origin: bottom;
-  transition: transform ${props => props.continiousMovement ? '1s' : 'none'} linear;
+  opacity: ${props => props.visible ? 1 : 0};
+  transform: translateX(-50%);
 `
 
 const SecondTickRoot = styled.div`
@@ -144,25 +146,75 @@ const secondsToDegrees = (seconds: number) => seconds * 360 / 60
 const minutesToDegrees = (minutes: number) => minutes * 360 / 60
 const hoursToDegrees = (hours: number) => hours * 360 / 12
 
-const timeToSeconds = (time: Date) => time.getTime() / 1000
-const timeToMinutes = (time: Date) => time.getTime() / 1000 / 60
-const timeToHours = (time: Date) => time.getTime() / 1000 / 3600
-
-
 const Clock = () => {
   const startOfDay = useMemo(() => moment().startOf('day').toDate(), [])
   const [secondsPassed, setSecondsPassed] = useState(() => moment().diff(startOfDay, 'seconds'))
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setSecondsPassed(moment().diff(startOfDay, 'seconds'))
-    }, 1000)
-
-    return () => clearInterval(interval)
-  }, [])
-
   const { width, height } = useWindowSize()
   const context = useClockSettings()
+
+  const secondsElementRef = useRef<HTMLDivElement>(null)
+  const minutesElementRef = useRef<HTMLDivElement>(null)
+  const hoursElementRef = useRef<HTMLDivElement>(null)
+
+  const secondsHandlerInterval = useRef<NodeJS.Timeout | null>(null)
+  const minutesAndHoursHandlerInterval = useRef<NodeJS.Timeout | null>(null)
+
+  // handle seconds hand movement
+  useEffect(() => {
+    if (secondsHandlerInterval.current) {
+      clearInterval(secondsHandlerInterval.current)
+    }
+
+    const isContinious = context.movementMethod === MovementOptions.CONTINIOUS
+
+    secondsHandlerInterval.current = createImmediateInterval(() => {
+      let secondsPassed = isContinious
+        ? moment().diff(startOfDay, 'milliseconds') / 1000
+        : moment().diff(startOfDay, 'seconds')
+
+      const angle = secondsToDegrees(secondsPassed)
+
+      if (secondsElementRef.current) {
+        secondsElementRef.current.style.transform = `translateX(-50%) rotate(${angle}deg)`
+      }
+    }, 1000 / 60)
+
+    return () => {
+      if (secondsHandlerInterval.current) {
+        clearInterval(secondsHandlerInterval.current)
+      }
+    }
+  }, [context.movementMethod])
+
+  // handle minutes and hours movement
+  useEffect(() => {
+    if (minutesAndHoursHandlerInterval.current) {
+      clearInterval(minutesAndHoursHandlerInterval.current)
+    }
+
+    minutesAndHoursHandlerInterval.current = createImmediateInterval(() => {
+      const secondsPassed = moment().diff(startOfDay, 'milliseconds') / 1000
+      const minutesPassed = secondsPassed / 60
+      const hoursPassed = minutesPassed / 60
+
+      const minutesAngle = minutesToDegrees(minutesPassed)
+      const hoursAngle = hoursToDegrees(hoursPassed)
+
+      if (minutesElementRef.current) {
+        minutesElementRef.current.style.transform = `translateX(-50%) rotate(${minutesAngle}deg)`
+      }
+
+      if (hoursElementRef.current) {
+        hoursElementRef.current.style.transform = `translateX(-50%) rotate(${hoursAngle}deg)`
+      }
+    }, 100)
+
+    return () => {
+      if (minutesAndHoursHandlerInterval.current) {
+        clearInterval(minutesAndHoursHandlerInterval.current)
+      }
+    }
+  }, [])
 
   const size = Math.min(width, height) * .85
 
@@ -179,10 +231,6 @@ const Clock = () => {
   const minutesHandWidth = baseHandWidth * context.minutesHand.thinckness
   const hoursHandWidth = baseHandWidth * context.hoursHand.thinckness
 
-  const secondsRotation = secondsToDegrees(secondsPassed)
-  const minutesRotation = minutesToDegrees(secondsPassed / 60)
-  const hoursRotation = hoursToDegrees(secondsPassed / 3600)
-
   const hoursHandStyle = { '--width': `${hoursHandWidth}px`, '--length': `${hoursHandSize}px` } as React.CSSProperties
   const minutesHandStyle = { '--width': `${minutesHandWidth}px`, '--length': `${minutesHandSize}px` } as React.CSSProperties
   const secondsHandStyle = { '--width': `${secondsHandWidth}px`, '--length': `${secondsHandSize}px` } as React.CSSProperties
@@ -192,24 +240,25 @@ const Clock = () => {
       <ClockRoot data-testid="clock-root" size={size} background={clockBackground}>
         <Face size={size} />
 
-        {context.showSeconds && (
-          <ClockHand
-            data-testid="seconds-hand"
-            continiousMovement={context.movementMethod === MovementOptions.CONTINIOUS}
-            style={{ ...secondsHandStyle, transform: `translateX(-50%) rotate(${secondsRotation}deg)` }}
-          />
-        )}
-
         <ClockHand
-          data-testid="minutes-hand"
-          continiousMovement={context.movementMethod === MovementOptions.CONTINIOUS}
-          style={{ ...minutesHandStyle, transform: `translateX(-50%) rotate(${minutesRotation}deg)` }}
+          ref={secondsElementRef}
+          data-testid="seconds-hand"
+          style={secondsHandStyle}
+          visible={context.showSeconds}
         />
 
         <ClockHand
+          ref={minutesElementRef}
+          data-testid="minutes-hand"
+          style={minutesHandStyle}
+          visible={true}
+        />
+
+        <ClockHand
+          ref={hoursElementRef}
           data-testid="hours-hand"
-          continiousMovement={context.movementMethod === MovementOptions.CONTINIOUS}
-          style={{ ...hoursHandStyle, transform: `translateX(-50%) rotate(${hoursRotation}deg)` }}
+          style={hoursHandStyle}
+          visible={true}
         />
 
         <ClockPivot size={size * .05} />
