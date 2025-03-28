@@ -1,9 +1,10 @@
 'use client'
 
 import { useWindowSize } from '@/hooks/useWindowSize'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import styled from 'styled-components'
 import { MovementOptions, useClockSettings } from '../contexts/ClockSettingsContext';
+import moment from 'moment'
 
 interface ClockRootProps {
   size: number;
@@ -20,6 +21,7 @@ interface ClockPivotProps {
 
 interface ClockHandProps extends React.HTMLAttributes<HTMLDivElement> {
   style?: React.CSSProperties;
+  continiousMovement: boolean;
 }
 
 const ClockContainer = styled.div<ClockContainerProps>`
@@ -56,11 +58,11 @@ const ClockHand = styled.div<ClockHandProps>`
   position: absolute;
   bottom: 50%;
   left: 50%;
-  transform: translateX(-50%) rotate(var(--rotation));
   width: var(--width);
   height: var(--length);
   background-color: white;
   transform-origin: bottom;
+  transition: transform ${props => props.continiousMovement ? '1s' : 'none'} linear;
 `
 
 const SecondTickRoot = styled.div`
@@ -142,8 +144,23 @@ const secondsToDegrees = (seconds: number) => seconds * 360 / 60
 const minutesToDegrees = (minutes: number) => minutes * 360 / 60
 const hoursToDegrees = (hours: number) => hours * 360 / 12
 
+const timeToSeconds = (time: Date) => time.getTime() / 1000
+const timeToMinutes = (time: Date) => time.getTime() / 1000 / 60
+const timeToHours = (time: Date) => time.getTime() / 1000 / 3600
+
+
 const Clock = () => {
-  const [time, setTime] = useState(new Date())
+  const startOfDay = useMemo(() => moment().startOf('day').toDate(), [])
+  const [secondsPassed, setSecondsPassed] = useState(() => moment().diff(startOfDay, 'seconds'))
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setSecondsPassed(moment().diff(startOfDay, 'seconds'))
+    }, 1000)
+
+    return () => clearInterval(interval)
+  }, [])
+
   const { width, height } = useWindowSize()
   const context = useClockSettings()
 
@@ -162,32 +179,38 @@ const Clock = () => {
   const minutesHandWidth = baseHandWidth * context.minutesHand.thinckness
   const hoursHandWidth = baseHandWidth * context.hoursHand.thinckness
 
-  const secondsRotation = secondsToDegrees(time.getSeconds())
-  const minutesRotation = minutesToDegrees(time.getMinutes())
-  const hoursRotation = hoursToDegrees(time.getHours())
+  const secondsRotation = secondsToDegrees(secondsPassed)
+  const minutesRotation = minutesToDegrees(secondsPassed / 60)
+  const hoursRotation = hoursToDegrees(secondsPassed / 3600)
 
-  const hoursHandStyle = { '--rotation': `${hoursRotation}deg`, '--width': `${hoursHandWidth}px`, '--length': `${hoursHandSize}px` } as React.CSSProperties
-  const minutesHandStyle = { '--rotation': `${minutesRotation}deg`, '--width': `${minutesHandWidth}px`, '--length': `${minutesHandSize}px` } as React.CSSProperties
-  const secondsHandStyle = { '--rotation': `${secondsRotation}deg`, '--width': `${secondsHandWidth}px`, '--length': `${secondsHandSize}px` } as React.CSSProperties
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setTime(new Date())
-    }, 1000)
-
-    return () => {
-      clearInterval(interval)
-    }
-  }, [])
+  const hoursHandStyle = { '--width': `${hoursHandWidth}px`, '--length': `${hoursHandSize}px` } as React.CSSProperties
+  const minutesHandStyle = { '--width': `${minutesHandWidth}px`, '--length': `${minutesHandSize}px` } as React.CSSProperties
+  const secondsHandStyle = { '--width': `${secondsHandWidth}px`, '--length': `${secondsHandSize}px` } as React.CSSProperties
 
   return (
     <ClockContainer background={background}>
       <ClockRoot data-testid="clock-root" size={size} background={clockBackground}>
         <Face size={size} />
 
-        {context.showSeconds && <ClockHand style={secondsHandStyle} />}
-        <ClockHand style={minutesHandStyle} />
-        <ClockHand style={hoursHandStyle} />
+        {context.showSeconds && (
+          <ClockHand
+            data-testid="seconds-hand"
+            continiousMovement={context.movementMethod === MovementOptions.CONTINIOUS}
+            style={{ ...secondsHandStyle, transform: `translateX(-50%) rotate(${secondsRotation}deg)` }}
+          />
+        )}
+
+        <ClockHand
+          data-testid="minutes-hand"
+          continiousMovement={context.movementMethod === MovementOptions.CONTINIOUS}
+          style={{ ...minutesHandStyle, transform: `translateX(-50%) rotate(${minutesRotation}deg)` }}
+        />
+
+        <ClockHand
+          data-testid="hours-hand"
+          continiousMovement={context.movementMethod === MovementOptions.CONTINIOUS}
+          style={{ ...hoursHandStyle, transform: `translateX(-50%) rotate(${hoursRotation}deg)` }}
+        />
 
         <ClockPivot size={size * .05} />
       </ClockRoot>
