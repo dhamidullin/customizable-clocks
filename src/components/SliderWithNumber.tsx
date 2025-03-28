@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import { trimNumber } from '@/app/utils/number';
 
 interface SliderWithNumberProps {
-  title: string;
+  title?: string;
   min: number;
   max: number;
   initialValue?: number;
@@ -67,7 +67,7 @@ const NumberInput = styled.input`
   }
 `;
 
-const SliderWithNumber: React.FC<SliderWithNumberProps> = ({ title, min, max, initialValue = min, onSliderChange, onFinalChange, }) => {
+const SliderWithNumber: React.FC<SliderWithNumberProps> = ({ title, min, max, initialValue = min, onSliderChange, onFinalChange }) => {
   const [value, setValue] = useState(initialValue);
   const [isDragging, setIsDragging] = useState(false);
 
@@ -91,15 +91,16 @@ const SliderWithNumber: React.FC<SliderWithNumberProps> = ({ title, min, max, in
   };
 
   const handleNumberInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const parsedValue = parseInt(e.target.value) || min
-    const newValue = trimNumber(parsedValue, min, max)
-    setValue(newValue)
-    onFinalChange?.(newValue)
+    const parsedValue = parseInt(e.target.value) || min;
+    const newValue = trimNumber(parsedValue, min, max);
+    setValue(newValue);
+    onFinalChange?.(newValue);
   };
 
   return (
     <Container>
-      <Title>{title}</Title>
+      {title && <Title>{title}</Title>}
+
       <ControlsRow>
         <Slider
           type="range"

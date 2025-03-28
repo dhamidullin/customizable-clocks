@@ -7,6 +7,7 @@ import SliderWithNumber from '@/components/SliderWithNumber'
 import { useClockSettings } from '../contexts/ClockSettingsContext'
 import { range } from '../utils/number'
 import { useThrottledCallback } from '../hooks/useThrottledCallback'
+import SettingsGroup from '@/components/SettingsGroup'
 
 const StyledSidebar = styled.div`
   position: fixed;
@@ -47,9 +48,9 @@ const StyledSidebarContent = styled.div`
   border-radius: 8px;
   padding: 10px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
 `
-
-const SettingsContainer = styled.div``
 
 const Sidebar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false)
@@ -62,7 +63,32 @@ const Sidebar: React.FC = () => {
   const handleMinutesHandSizeChange = useThrottledCallback((newValue: number) => {
     const newSize = range(newValue, 0, 100, 0, 1)
     context.minutesHand.setSize(newSize)
-  }, 1000 / 30, [])
+  }, 100, [])
+
+  const handleMinutesHandThicknessChange = useThrottledCallback((newValue: number) => {
+    const newThickness = range(newValue, 0, 100, 0, 1)
+    context.minutesHand.setThickness(newThickness)
+  }, 100, [])
+
+  const handleHoursHandSizeChange = useThrottledCallback((newValue: number) => {
+    const newSize = range(newValue, 0, 100, 0, 1)
+    context.hoursHand.setSize(newSize)
+  }, 100, [])
+
+  const handleHoursHandThicknessChange = useThrottledCallback((newValue: number) => {
+    const newThickness = range(newValue, 0, 100, 0, 1)
+    context.hoursHand.setThickness(newThickness)
+  }, 100, [])
+
+  const handleSecondsHandSizeChange = useThrottledCallback((newValue: number) => {
+    const newSize = range(newValue, 0, 100, 0, 1)
+    context.secondsHand.setSize(newSize)
+  }, 100, [])
+
+  const handleSecondsHandThicknessChange = useThrottledCallback((newValue: number) => {
+    const newThickness = range(newValue, 0, 100, 0, 1)
+    context.secondsHand.setThickness(newThickness)
+  }, 100, [])
 
   return (
     <StyledSidebar>
@@ -73,15 +99,59 @@ const Sidebar: React.FC = () => {
       <StyledSidebarContent style={sidebarStyle}>
         <h3>Settings</h3>
 
-        <SettingsContainer>
+        <SettingsGroup title="Hours Hand" style={{ marginTop: '6px' }}>
           <SliderWithNumber
-            title="Minutes Hand Size"
+            title="Size"
+            min={0}
+            max={100}
+            onSliderChange={handleHoursHandSizeChange}
+            onFinalChange={handleHoursHandSizeChange}
+          />
+
+          <SliderWithNumber
+            title="Thickness"
+            min={0}
+            max={100}
+            onSliderChange={handleHoursHandThicknessChange}
+            onFinalChange={handleHoursHandThicknessChange}
+          />
+        </SettingsGroup>
+
+        <SettingsGroup title="Minutes Hand" style={{ marginTop: '6px' }}>
+          <SliderWithNumber
+            title="Size"
             min={0}
             max={100}
             onSliderChange={handleMinutesHandSizeChange}
             onFinalChange={handleMinutesHandSizeChange}
           />
-        </SettingsContainer>
+
+          <SliderWithNumber
+            title="Thickness"
+            min={0}
+            max={100}
+            onSliderChange={handleMinutesHandThicknessChange}
+            onFinalChange={handleMinutesHandThicknessChange}
+          />
+        </SettingsGroup>
+
+        <SettingsGroup title="Seconds Hand" style={{ marginTop: '6px' }}>
+          <SliderWithNumber
+            title="Size"
+            min={0}
+            max={100}
+            onSliderChange={handleSecondsHandSizeChange}
+            onFinalChange={handleSecondsHandSizeChange}
+          />
+
+          <SliderWithNumber
+            title="Thickness"
+            min={0}
+            max={100}
+            onSliderChange={handleSecondsHandThicknessChange}
+            onFinalChange={handleSecondsHandThicknessChange}
+          />
+        </SettingsGroup>
       </StyledSidebarContent>
     </StyledSidebar>
   )

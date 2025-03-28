@@ -16,7 +16,7 @@ interface HandSettings {
 
 type HandContextType = HandSettings & {
   setSize: (size: number) => void
-  setThinckness: (thinckness: number) => void
+  setThickness: (thinckness: number) => void
   setVisible: (visible: boolean) => void
   setMovementMethod: (movementMethod: MovementOptions) => void
 }
@@ -34,7 +34,7 @@ const defaults: ClockSettingsContextType = {
     visible: true,
     movementMethod: MovementOptions.CONTINIOUS,
     setSize: () => { },
-    setThinckness: () => { },
+    setThickness: () => { },
     setVisible: () => { },
     setMovementMethod: () => { },
   },
@@ -45,7 +45,7 @@ const defaults: ClockSettingsContextType = {
     visible: true,
     movementMethod: MovementOptions.CONTINIOUS,
     setSize: () => { },
-    setThinckness: () => { },
+    setThickness: () => { },
     setVisible: () => { },
     setMovementMethod: () => { },
   },
@@ -56,7 +56,7 @@ const defaults: ClockSettingsContextType = {
     visible: true,
     movementMethod: MovementOptions.CONTINIOUS,
     setSize: () => { },
-    setThinckness: () => { },
+    setThickness: () => { },
     setVisible: () => { },
     setMovementMethod: () => { },
   },
@@ -73,7 +73,7 @@ export function ClockSettingsProvider({ children }: { children: React.ReactNode 
     minutesHand: {
       ...minutesHand,
       setSize: (size: number) => setMinutesHand({ ...minutesHand, size }),
-      setThinckness: (thinckness: number) => setMinutesHand({ ...minutesHand, thinckness }),
+      setThickness: (thinckness: number) => setMinutesHand({ ...minutesHand, thinckness }),
       setVisible: (visible: boolean) => setMinutesHand({ ...minutesHand, visible }),
       setMovementMethod: (movementMethod: MovementOptions) => setMinutesHand({ ...minutesHand, movementMethod }),
     },
@@ -81,7 +81,7 @@ export function ClockSettingsProvider({ children }: { children: React.ReactNode 
     hoursHand: {
       ...hoursHand,
       setSize: (size: number) => setHoursHand({ ...hoursHand, size }),
-      setThinckness: (thinckness: number) => setHoursHand({ ...hoursHand, thinckness }),
+      setThickness: (thinckness: number) => setHoursHand({ ...hoursHand, thinckness }),
       setVisible: (visible: boolean) => setHoursHand({ ...hoursHand, visible }),
       setMovementMethod: (movementMethod: MovementOptions) => setHoursHand({ ...hoursHand, movementMethod }),
     },
@@ -89,7 +89,7 @@ export function ClockSettingsProvider({ children }: { children: React.ReactNode 
     secondsHand: {
       ...secondsHand,
       setSize: (size: number) => setSecondsHand({ ...secondsHand, size }),
-      setThinckness: (thinckness: number) => setSecondsHand({ ...secondsHand, thinckness }),
+      setThickness: (thinckness: number) => setSecondsHand({ ...secondsHand, thinckness }),
       setVisible: (visible: boolean) => setSecondsHand({ ...secondsHand, visible }),
       setMovementMethod: (movementMethod: MovementOptions) => setSecondsHand({ ...secondsHand, movementMethod }),
     },
