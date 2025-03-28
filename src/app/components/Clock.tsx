@@ -3,6 +3,7 @@
 import { useWindowSize } from '@/hooks/useWindowSize'
 import React, { useEffect, useState } from 'react'
 import styled from 'styled-components'
+import { useClockSettings } from '../contexts/ClockSettingsContext';
 
 interface ClockRootProps {
   size: number;
@@ -124,7 +125,7 @@ const Face = ({ size }: { size: number }) => {
     })
     .map(item => {
       if (item.isSecond) {
-        return <SecondTick angle={item.angle} size={size} />
+        return <SecondTick key={'second-tick-' + item.angle} angle={item.angle} size={size} />
       }
 
       return null
@@ -144,6 +145,7 @@ const hoursToDegrees = (hours: number, hoursPerDay: number) => hours * 360 / hou
 const Clock = () => {
   const [time, setTime] = useState(new Date())
   const { width, height } = useWindowSize()
+  const context = useClockSettings()
 
   const size = Math.min(width, height) * .85
 
@@ -152,13 +154,13 @@ const Clock = () => {
   const baseHandSize = size * .5
   const baseHandWidth = size * .01
 
-  const secondsHandSize = baseHandSize * .9
-  const minutesHandSize = baseHandSize * .75
-  const hoursHandSize = baseHandSize * .4
+  const secondsHandSize = baseHandSize * context.secondsHand.size
+  const minutesHandSize = baseHandSize * context.minutesHand.size
+  const hoursHandSize = baseHandSize * context.hoursHand.size
 
-  const secondsHandWidth = baseHandWidth * .2
-  const minutesHandWidth = baseHandWidth * 1
-  const hoursHandWidth = baseHandWidth * 1.8
+  const secondsHandWidth = baseHandWidth * context.secondsHand.thinckness
+  const minutesHandWidth = baseHandWidth * context.minutesHand.thinckness
+  const hoursHandWidth = baseHandWidth * context.hoursHand.thinckness
 
   const hoursRotation = hoursToDegrees(time.getHours(), 12)
   const minutesRotation = minutesToDegrees(time.getMinutes())
