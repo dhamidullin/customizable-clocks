@@ -1,19 +1,11 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
-
-## Dev and Prod
-
-First, run the development server:
+## Dev
 
 ```bash
-yarn dev
+yarn dev # to run the dev server
 ```
 
-To build and start the service:
+## Prod
 ```sh
-docker compose up -d --build
-```
-
-To stop the service:
-```sh
-docker compose down
+docker compose up -d --build # to [re]build and [re]start the project
+docker compose down # to stop the project
 ```
