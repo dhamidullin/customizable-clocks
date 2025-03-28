@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState } from 'react'
 
-enum MovementOptions {
+export enum MovementOptions {
   CONTINIOUS = 'CONTINIOUS',
   STEPPY = 'STEPPY',
 }
@@ -11,71 +11,113 @@ interface HandSettings {
   size: number
   thinckness: number
   visible: boolean
-  movementMethod: MovementOptions
 }
 
 type HandContextType = HandSettings & {
   setSize: (size: number) => void
   setThickness: (thinckness: number) => void
   setVisible: (visible: boolean) => void
-  setMovementMethod: (movementMethod: MovementOptions) => void
 }
 
 interface ClockSettingsContextType {
+  movementMethod: MovementOptions
+  setMovementMethod: (movementMethod: MovementOptions) => void
+
+  showSeconds: boolean
+  setShowSeconds: (showSeconds: boolean) => void
+
+  showDigital: boolean
+  setShowDigital: (showDigital: boolean) => void
+
+  sound: boolean
+  setSound: (sound: boolean) => void
+
+  volume: number
+  setVolume: (volume: number) => void
+
   minutesHand: HandContextType
   hoursHand: HandContextType
   secondsHand: HandContextType
 }
 
 const defaults: ClockSettingsContextType = {
-  minutesHand: {
+  movementMethod: MovementOptions.CONTINIOUS,
+  setMovementMethod: () => { },
+
+  showSeconds: true,
+  setShowSeconds: () => { },
+
+  showDigital: false,
+  setShowDigital: () => { },
+
+  sound: true,
+  setSound: () => { },
+
+  volume: 0.5,
+  setVolume: () => { },
+
+  hoursHand: {
     size: .4,
     thinckness: 1.8,
     visible: true,
-    movementMethod: MovementOptions.CONTINIOUS,
     setSize: () => { },
     setThickness: () => { },
     setVisible: () => { },
-    setMovementMethod: () => { },
   },
 
-  hoursHand: {
+  minutesHand: {
     size: .75,
     thinckness: 1,
     visible: true,
-    movementMethod: MovementOptions.CONTINIOUS,
     setSize: () => { },
     setThickness: () => { },
     setVisible: () => { },
-    setMovementMethod: () => { },
   },
 
   secondsHand: {
     size: .9,
     thinckness: .2,
     visible: true,
-    movementMethod: MovementOptions.CONTINIOUS,
     setSize: () => { },
     setThickness: () => { },
     setVisible: () => { },
-    setMovementMethod: () => { },
   },
 }
 
 const ClockSettingsContext = createContext<ClockSettingsContextType>(defaults)
 
 export function ClockSettingsProvider({ children }: { children: React.ReactNode }) {
+  const [movementMethod, setMovementMethod] = useState<MovementOptions>(defaults.movementMethod)
+  const [showSeconds, setShowSeconds] = useState<boolean>(defaults.showSeconds)
+  const [showDigital, setShowDigital] = useState<boolean>(defaults.showDigital)
+  const [sound, setSound] = useState<boolean>(defaults.sound)
+  const [volume, setVolume] = useState<number>(defaults.volume)
+
   const [minutesHand, setMinutesHand] = useState<HandSettings>(defaults.minutesHand)
   const [hoursHand, setHoursHand] = useState<HandSettings>(defaults.hoursHand)
   const [secondsHand, setSecondsHand] = useState<HandSettings>(defaults.secondsHand)
 
-  const contextValue = {
+  const contextValue: ClockSettingsContextType = {
+    movementMethod,
+    setMovementMethod,
+
+    showSeconds,
+    setShowSeconds,
+
+    showDigital,
+    setShowDigital,
+
+    sound,
+    setSound,
+
+    volume,
+    setVolume,
+
     minutesHand: {
       ...minutesHand,
       setSize: (size: number) => setMinutesHand({ ...minutesHand, size }),
       setThickness: (thinckness: number) => setMinutesHand({ ...minutesHand, thinckness }),
       setVisible: (visible: boolean) => setMinutesHand({ ...minutesHand, visible }),
-      setMovementMethod: (movementMethod: MovementOptions) => setMinutesHand({ ...minutesHand, movementMethod }),
     },
 
     hoursHand: {
@@ -83,7 +125,6 @@ export function ClockSettingsProvider({ children }: { children: React.ReactNode 
       setSize: (size: number) => setHoursHand({ ...hoursHand, size }),
       setThickness: (thinckness: number) => setHoursHand({ ...hoursHand, thinckness }),
       setVisible: (visible: boolean) => setHoursHand({ ...hoursHand, visible }),
-      setMovementMethod: (movementMethod: MovementOptions) => setHoursHand({ ...hoursHand, movementMethod }),
     },
 
     secondsHand: {
@@ -91,7 +132,6 @@ export function ClockSettingsProvider({ children }: { children: React.ReactNode 
       setSize: (size: number) => setSecondsHand({ ...secondsHand, size }),
       setThickness: (thinckness: number) => setSecondsHand({ ...secondsHand, thinckness }),
       setVisible: (visible: boolean) => setSecondsHand({ ...secondsHand, visible }),
-      setMovementMethod: (movementMethod: MovementOptions) => setSecondsHand({ ...secondsHand, movementMethod }),
     },
   }
 
@@ -104,8 +144,10 @@ export function ClockSettingsProvider({ children }: { children: React.ReactNode 
 
 export function useClockSettings() {
   const context = useContext(ClockSettingsContext)
+
   if (context === undefined) {
     throw new Error('useClockSettings must be used within a ClockSettingsProvider')
   }
+
   return context
-} 
+}

@@ -3,7 +3,7 @@
 import { useWindowSize } from '@/hooks/useWindowSize'
 import React, { useEffect, useState } from 'react'
 import styled from 'styled-components'
-import { useClockSettings } from '../contexts/ClockSettingsContext';
+import { MovementOptions, useClockSettings } from '../contexts/ClockSettingsContext';
 
 interface ClockRootProps {
   size: number;
@@ -140,7 +140,7 @@ const Face = ({ size }: { size: number }) => {
 
 const secondsToDegrees = (seconds: number) => seconds * 360 / 60
 const minutesToDegrees = (minutes: number) => minutes * 360 / 60
-const hoursToDegrees = (hours: number, hoursPerDay: number) => hours * 360 / hoursPerDay
+const hoursToDegrees = (hours: number) => hours * 360 / 12
 
 const Clock = () => {
   const [time, setTime] = useState(new Date())
@@ -162,9 +162,9 @@ const Clock = () => {
   const minutesHandWidth = baseHandWidth * context.minutesHand.thinckness
   const hoursHandWidth = baseHandWidth * context.hoursHand.thinckness
 
-  const hoursRotation = hoursToDegrees(time.getHours(), 12)
-  const minutesRotation = minutesToDegrees(time.getMinutes())
   const secondsRotation = secondsToDegrees(time.getSeconds())
+  const minutesRotation = minutesToDegrees(time.getMinutes())
+  const hoursRotation = hoursToDegrees(time.getHours())
 
   const hoursHandStyle = { '--rotation': `${hoursRotation}deg`, '--width': `${hoursHandWidth}px`, '--length': `${hoursHandSize}px` } as React.CSSProperties
   const minutesHandStyle = { '--rotation': `${minutesRotation}deg`, '--width': `${minutesHandWidth}px`, '--length': `${minutesHandSize}px` } as React.CSSProperties
@@ -185,9 +185,9 @@ const Clock = () => {
       <ClockRoot data-testid="clock-root" size={size} background={clockBackground}>
         <Face size={size} />
 
-        <ClockHand style={hoursHandStyle} />
+        {context.showSeconds && <ClockHand style={secondsHandStyle} />}
         <ClockHand style={minutesHandStyle} />
-        <ClockHand style={secondsHandStyle} />
+        <ClockHand style={hoursHandStyle} />
 
         <ClockPivot size={size * .05} />
       </ClockRoot>

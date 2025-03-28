@@ -1,13 +1,15 @@
 'use client'
+
 import React, { useState } from 'react'
 import styled from 'styled-components'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faBars } from '@fortawesome/free-solid-svg-icons'
 import SliderWithNumber from '@/components/SliderWithNumber'
-import { useClockSettings } from '../contexts/ClockSettingsContext'
+import { MovementOptions, useClockSettings } from '../contexts/ClockSettingsContext'
 import { range } from '../utils/number'
 import { useThrottledCallback } from '../hooks/useThrottledCallback'
 import SettingsGroup from '@/components/SettingsGroup'
+import ToggleButton from '@/components/ToggleButton'
 
 const StyledSidebar = styled.div`
   position: fixed;
@@ -48,7 +50,7 @@ const StyledSidebarContent = styled.div`
   border-radius: 8px;
   padding: 10px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  max-height: calc(100vh - 40px);
+  max-height: calc(100vh - 60px);
   overflow-y: auto;
 `
 
@@ -98,6 +100,18 @@ const Sidebar: React.FC = () => {
 
       <StyledSidebarContent style={sidebarStyle}>
         <h3>Settings</h3>
+
+        <ToggleButton
+          title="Continious move"
+          isOn={context.movementMethod === MovementOptions.CONTINIOUS}
+          onChange={(value) => context.setMovementMethod(value ? MovementOptions.CONTINIOUS : MovementOptions.STEPPY)}
+        />
+
+        <ToggleButton
+          title="Show seconds"
+          isOn={context.showSeconds}
+          onChange={(value) => context.setShowSeconds(value)}
+        />
 
         <SettingsGroup title="Hours Hand" style={{ marginTop: '6px' }}>
           <SliderWithNumber
