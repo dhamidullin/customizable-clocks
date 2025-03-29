@@ -150,8 +150,8 @@ const HourNumber = ({ label, angle, size }: HourNumberProps) => (
 )
 
 const Face = ({ size }: { size: number }) => {
-  const hoursPerDay = 12 /* use 12/24 value from context here */
   const context = useClockSettings()
+  const hoursPerDay = context.use24HourFormat ? 24 : 12
 
   const hideSecondIndices = !context.showSecondIndices
   const hideHourNumbers = !context.showHourNumbers
@@ -174,7 +174,7 @@ const Face = ({ size }: { size: number }) => {
     .map(second => {
       const angle = second * (360 / 60)
 
-      if (hours.some(hour => hour.angle === angle)) {
+      if (context.showHourNumbers && hours.some(hour => hour.angle === angle)) {
         return null
       }
 
@@ -193,7 +193,7 @@ const Face = ({ size }: { size: number }) => {
 
 const secondsToDegrees = (seconds: number) => seconds * 360 / 60
 const minutesToDegrees = (minutes: number) => minutes * 360 / 60
-const hoursToDegrees = (hours: number) => hours * 360 / 12
+const hoursToDegrees = (hours: number, hoursPerDay: number) => hours * 360 / hoursPerDay
 
 const Clock = () => {
   const startOfDay = useMemo(() => moment().startOf('day').toDate(), [])
@@ -205,14 +205,14 @@ const Clock = () => {
   const hoursElementRef = useRef<HTMLDivElement>(null)
   const animationFrameRef = useRef<number | null>(null)
 
+  const isContinious = context.movementMethod === MovementOptions.CONTINIOUS
+
   // handle seconds hand movement
   useEffect(() => {
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current)
       animationFrameRef.current = null
     }
-
-    const isContinious = context.movementMethod === MovementOptions.CONTINIOUS
 
     const animate = () => {
       let secondsPassed = isContinious ? moment().diff(startOfDay, 'milliseconds') / 1000 : moment().diff(startOfDay, 'seconds')
@@ -221,7 +221,7 @@ const Clock = () => {
 
       const secondsAngle = secondsToDegrees(secondsPassed)
       const minutesAngle = minutesToDegrees(minutesPassed)
-      const hoursAngle = hoursToDegrees(hoursPassed)
+      const hoursAngle = hoursToDegrees(hoursPassed, context.use24HourFormat ? 24 : 12)
 
       if (secondsElementRef.current)
         secondsElementRef.current.style.transform = `translateX(-50%) rotate(${secondsAngle}deg)`
@@ -243,7 +243,7 @@ const Clock = () => {
         animationFrameRef.current = null
       }
     }
-  }, [context.movementMethod, startOfDay])
+  }, [isContinious, startOfDay])
 
   const size = Math.min(width, height) * .85
 
@@ -264,6 +264,8 @@ const Clock = () => {
   const minutesHandStyle = { '--width': `${minutesHandWidth}px`, '--length': `${minutesHandSize}px` } as React.CSSProperties
   const secondsHandStyle = { '--width': `${secondsHandWidth}px`, '--length': `${secondsHandSize}px` } as React.CSSProperties
 
+  const transition = isContinious ? 'none' : 'all .2s ease-in-out'
+
   return (
     <ClockContainer background={background}>
       <ClockRoot data-testid="clock-root" size={size} background={clockBackground}>
@@ -272,21 +274,21 @@ const Clock = () => {
         <ClockHand
           ref={secondsElementRef}
           data-testid="seconds-hand"
-          style={secondsHandStyle}
+          style={{ ...secondsHandStyle, transition }}
           visible={context.showSeconds}
         />
 
         <ClockHand
           ref={minutesElementRef}
           data-testid="minutes-hand"
-          style={minutesHandStyle}
+          style={{ ...minutesHandStyle, transition }}
           visible={true}
         />
 
         <ClockHand
           ref={hoursElementRef}
           data-testid="hours-hand"
-          style={hoursHandStyle}
+          style={{ ...hoursHandStyle, transition }}
           visible={true}
         />
 

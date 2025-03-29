@@ -110,6 +110,12 @@ const Sidebar: React.FC = () => {
         <StyledHeading>Settings</StyledHeading>
 
         <ToggleButton
+          title="24 hours format"
+          isOn={context.use24HourFormat}
+          onChange={(value) => context.setUse24HourFormat(value)}
+        />
+
+        <ToggleButton
           title="Continious move"
           isOn={context.movementMethod === MovementOptions.CONTINIOUS}
           onChange={(value) => context.setMovementMethod(value ? MovementOptions.CONTINIOUS : MovementOptions.STEPPY)}

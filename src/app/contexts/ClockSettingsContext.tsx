@@ -13,7 +13,7 @@ interface HandSettings {
   visible: boolean
 }
 
-type HandContextType = HandSettings & {
+type Hand = HandSettings & {
   setSize: (size: number) => void
   setThickness: (thinckness: number) => void
   setVisible: (visible: boolean) => void
@@ -41,9 +41,12 @@ interface ClockSettingsContextType {
   showSecondIndices: boolean,
   setShowSecondIndices: (showSecondIndices: boolean) => void
 
-  minutesHand: HandContextType
-  hoursHand: HandContextType
-  secondsHand: HandContextType
+  use24HourFormat: boolean,
+  setUse24HourFormat: (use24HourFormat: boolean) => void
+
+  minutesHand: Hand
+  hoursHand: Hand
+  secondsHand: Hand
 }
 
 const defaults: ClockSettingsContextType = {
@@ -67,6 +70,9 @@ const defaults: ClockSettingsContextType = {
 
   showSecondIndices: true,
   setShowSecondIndices: () => { },
+
+  use24HourFormat: false,
+  setUse24HourFormat: () => { },
 
   hoursHand: {
     size: .4,
@@ -104,6 +110,7 @@ export function ClockSettingsProvider({ children }: { children: React.ReactNode 
   const [showDigital, setShowDigital] = useState<boolean>(defaults.showDigital)
   const [sound, setSound] = useState<boolean>(defaults.sound)
   const [volume, setVolume] = useState<number>(defaults.volume)
+  const [use24HourFormat, setUse24HourFormat] = useState<boolean>(defaults.use24HourFormat)
 
   const [minutesHand, setMinutesHand] = useState<HandSettings>(defaults.minutesHand)
   const [hoursHand, setHoursHand] = useState<HandSettings>(defaults.hoursHand)
@@ -133,6 +140,9 @@ export function ClockSettingsProvider({ children }: { children: React.ReactNode 
 
     showSecondIndices,
     setShowSecondIndices,
+
+    use24HourFormat,
+    setUse24HourFormat,
 
     minutesHand: {
       ...minutesHand,
@@ -171,4 +181,29 @@ export function useClockSettings() {
   }
 
   return context
+}
+
+
+
+export const staticSettings = { // values in percentages
+  hours: {
+    minThickness: 0.01 * 3,
+    maxThickness: 0.3 * 3,
+    minSize: .5 * .25,
+    maxSize: .5 * .75,
+  },
+
+  minutes: {
+    minThickness: 0.01 * 2,
+    maxThickness: 0.3 * 2,
+    minSize: .5 * .5,
+    maxSize: .5 * 1,
+  },
+
+  seconds: {
+    minThickness: 0.01,
+    maxThickness: 0.3,
+    minSize: .5 * .5,
+    maxSize: .5 * 1,
+  },
 }
