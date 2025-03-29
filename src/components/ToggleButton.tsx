@@ -67,17 +67,21 @@ const ToggleSwitch = styled.label<{ isOn: boolean }>`
 `;
 
 const ToggleButton: React.FC<ToggleButtonProps> = ({ title, isOn, onChange }) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (onChange) {
+      onChange(!!e.target.checked);
+    }
+  };
+
   return (
     <Container>
       {title && <Title>{title}</Title>}
-
       <ToggleSwitch isOn={isOn || false}>
         <input
           type="checkbox"
-          checked={isOn}
-          onChange={(e) => onChange?.(!!e.target.checked)}
+          checked={isOn || false}
+          onChange={handleChange}
         />
-
         <span />
       </ToggleSwitch>
     </Container>
