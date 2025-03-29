@@ -54,6 +54,14 @@ const StyledSidebarContent = styled.div`
   overflow-y: auto;
 `
 
+const StyledHeading = styled.h3`
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 10px;
+  text-align: center;
+  padding-right: 10px;
+`
+
 const Sidebar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false)
   const context = useClockSettings()
@@ -99,7 +107,7 @@ const Sidebar: React.FC = () => {
       </IconWrapper>
 
       <StyledSidebarContent style={sidebarStyle}>
-        <h3>Settings</h3>
+        <StyledHeading>Settings</StyledHeading>
 
         <ToggleButton
           title="Continious move"
@@ -111,6 +119,18 @@ const Sidebar: React.FC = () => {
           title="Show seconds"
           isOn={context.showSeconds}
           onChange={(value) => context.setShowSeconds(value)}
+        />
+
+        <ToggleButton
+          title="Show hour numbers"
+          isOn={context.showHourNumbers}
+          onChange={(value) => context.setShowHourNumbers(value)}
+        />
+
+        <ToggleButton
+          title="Show second indices"
+          isOn={context.showSecondIndices}
+          onChange={(value) => context.setShowSecondIndices(value)}
         />
 
         <SettingsGroup title="Hours Hand" style={{ marginTop: '6px' }}>

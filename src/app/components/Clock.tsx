@@ -1,7 +1,7 @@
 'use client'
 
 import { useWindowSize } from '@/hooks/useWindowSize'
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef } from 'react'
 import styled from 'styled-components'
 import { MovementOptions, useClockSettings } from '../contexts/ClockSettingsContext';
 import moment from 'moment'
@@ -87,7 +87,7 @@ const SecondTickContainer = styled.div`
 `
 
 const SecondTickLine = styled.div`
-  width: 20px;
+  width: 5px;
   height: 20px;
   border-radius: 50%;
   background-color: white;
@@ -96,6 +96,31 @@ const SecondTickLine = styled.div`
   top: 0;
   left: 50%;
   transform: translateX(-50%);
+`
+
+const HourTickRoot = styled.div`
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translateX(-50%);
+`
+
+const HourTickContainer = styled.div`
+  width: 1px;
+  transform-origin: center bottom;
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+`
+
+const HourLabel = styled.div`
+  color: white;
+  font-size: 24px;
+  font-weight: bold;
+  position: absolute;
+  top: 0;
+  left: 0;
 `
 
 const SecondTick = ({ angle, size }: { angle: number, size: number }) => {
@@ -108,36 +133,60 @@ const SecondTick = ({ angle, size }: { angle: number, size: number }) => {
   )
 }
 
+interface HourNumberProps {
+  label: number
+  angle: number
+  size: number
+}
+
+const HourNumber = ({ label, angle, size }: HourNumberProps) => (
+  <HourTickRoot data-testid={`hour-number-${angle}deg`} style={{ transform: `rotate(${angle}deg)` }}>
+    <HourTickContainer style={{ height: `${size * .5 * .95}px` }}>
+      <HourLabel style={{ transform: `translateX(-50%) translateY(-25%) rotate(${-angle}deg)` }}>
+        {label}
+      </HourLabel>
+    </HourTickContainer>
+  </HourTickRoot>
+)
+
 const Face = ({ size }: { size: number }) => {
   const hoursPerDay = 12 /* use 12/24 value from context here */
+  const context = useClockSettings()
 
-  const ticks = 120
-  const items = Array
-    .from({ length: ticks }, (_, i) => i + 1)
-    .map(item => {
-      const isSecond = item % (ticks / 60) === 0
-      const isHour = item % (ticks / hoursPerDay) === 0
-      const hour = isHour ? item / (ticks / hoursPerDay) : undefined
-      const angle = item * (360 / ticks)
+  const hideSecondIndices = !context.showSecondIndices
+  const hideHourNumbers = !context.showHourNumbers
 
-      return {
-        isSecond,
-        isHour,
-        hour,
-        angle,
+  const hours = useMemo(() => {
+    return Array.from({ length: hoursPerDay }, (_, i) => i + 1)
+      .map((hour) => ({
+        angle: hour * (360 / hoursPerDay),
+        label: hour,
+      }))
+  }, [hoursPerDay])
+
+  const hourElements = useMemo(() => {
+    return hideHourNumbers ? null : hours.map(({ angle, label }) => (
+      <HourNumber key={'hour-number-' + angle} label={label} angle={angle} size={size} />
+    ))
+  }, [hours, hideHourNumbers])
+
+  const seconds = hideSecondIndices ? null : Array.from({ length: 60 }, (_, i) => i + 1)
+    .map(second => {
+      const angle = second * (360 / 60)
+
+      if (hours.some(hour => hour.angle === angle)) {
+        return null
       }
-    })
-    .map(item => {
-      if (item.isSecond) {
-        return <SecondTick key={'second-tick-' + item.angle} angle={item.angle} size={size} />
-      }
 
-      return null
+      return (
+        <SecondTick key={'second-tick-' + angle} angle={angle} size={size} />
+      )
     })
 
   return (
     <>
-      {items}
+      {hourElements}
+      {seconds}
     </>
   )
 }
@@ -148,73 +197,53 @@ const hoursToDegrees = (hours: number) => hours * 360 / 12
 
 const Clock = () => {
   const startOfDay = useMemo(() => moment().startOf('day').toDate(), [])
-  const [secondsPassed, setSecondsPassed] = useState(() => moment().diff(startOfDay, 'seconds'))
   const { width, height } = useWindowSize()
   const context = useClockSettings()
 
   const secondsElementRef = useRef<HTMLDivElement>(null)
   const minutesElementRef = useRef<HTMLDivElement>(null)
   const hoursElementRef = useRef<HTMLDivElement>(null)
-
-  const secondsHandlerInterval = useRef<NodeJS.Timeout | null>(null)
-  const minutesAndHoursHandlerInterval = useRef<NodeJS.Timeout | null>(null)
+  const animationFrameRef = useRef<number | null>(null)
 
   // handle seconds hand movement
   useEffect(() => {
-    if (secondsHandlerInterval.current) {
-      clearInterval(secondsHandlerInterval.current)
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current)
+      animationFrameRef.current = null
     }
 
     const isContinious = context.movementMethod === MovementOptions.CONTINIOUS
 
-    secondsHandlerInterval.current = createImmediateInterval(() => {
-      let secondsPassed = isContinious
-        ? moment().diff(startOfDay, 'milliseconds') / 1000
-        : moment().diff(startOfDay, 'seconds')
-
-      const angle = secondsToDegrees(secondsPassed)
-
-      if (secondsElementRef.current) {
-        secondsElementRef.current.style.transform = `translateX(-50%) rotate(${angle}deg)`
-      }
-    }, 1000 / 60)
-
-    return () => {
-      if (secondsHandlerInterval.current) {
-        clearInterval(secondsHandlerInterval.current)
-      }
-    }
-  }, [context.movementMethod])
-
-  // handle minutes and hours movement
-  useEffect(() => {
-    if (minutesAndHoursHandlerInterval.current) {
-      clearInterval(minutesAndHoursHandlerInterval.current)
-    }
-
-    minutesAndHoursHandlerInterval.current = createImmediateInterval(() => {
-      const secondsPassed = moment().diff(startOfDay, 'milliseconds') / 1000
+    const animate = () => {
+      let secondsPassed = isContinious ? moment().diff(startOfDay, 'milliseconds') / 1000 : moment().diff(startOfDay, 'seconds')
       const minutesPassed = secondsPassed / 60
       const hoursPassed = minutesPassed / 60
 
+      const secondsAngle = secondsToDegrees(secondsPassed)
       const minutesAngle = minutesToDegrees(minutesPassed)
       const hoursAngle = hoursToDegrees(hoursPassed)
 
-      if (minutesElementRef.current) {
-        minutesElementRef.current.style.transform = `translateX(-50%) rotate(${minutesAngle}deg)`
-      }
+      if (secondsElementRef.current)
+        secondsElementRef.current.style.transform = `translateX(-50%) rotate(${secondsAngle}deg)`
 
-      if (hoursElementRef.current) {
+      if (minutesElementRef.current)
+        minutesElementRef.current.style.transform = `translateX(-50%) rotate(${minutesAngle}deg)`
+
+      if (hoursElementRef.current)
         hoursElementRef.current.style.transform = `translateX(-50%) rotate(${hoursAngle}deg)`
-      }
-    }, 100)
+
+      animationFrameRef.current = requestAnimationFrame(animate)
+    }
+
+    animationFrameRef.current = requestAnimationFrame(animate)
 
     return () => {
-      if (minutesAndHoursHandlerInterval.current) {
-        clearInterval(minutesAndHoursHandlerInterval.current)
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current)
+        animationFrameRef.current = null
       }
     }
-  }, [])
+  }, [context.movementMethod, startOfDay])
 
   const size = Math.min(width, height) * .85
 

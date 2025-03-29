@@ -35,6 +35,12 @@ interface ClockSettingsContextType {
   volume: number
   setVolume: (volume: number) => void
 
+  showHourNumbers: boolean,
+  setShowHourNumbers: (showHourNumbers: boolean) => void
+
+  showSecondIndices: boolean,
+  setShowSecondIndices: (showSecondIndices: boolean) => void
+
   minutesHand: HandContextType
   hoursHand: HandContextType
   secondsHand: HandContextType
@@ -55,6 +61,12 @@ const defaults: ClockSettingsContextType = {
 
   volume: 0.5,
   setVolume: () => { },
+
+  showHourNumbers: true,
+  setShowHourNumbers: () => { },
+
+  showSecondIndices: true,
+  setShowSecondIndices: () => { },
 
   hoursHand: {
     size: .4,
@@ -97,6 +109,9 @@ export function ClockSettingsProvider({ children }: { children: React.ReactNode 
   const [hoursHand, setHoursHand] = useState<HandSettings>(defaults.hoursHand)
   const [secondsHand, setSecondsHand] = useState<HandSettings>(defaults.secondsHand)
 
+  const [showHourNumbers, setShowHourNumbers] = useState<boolean>(defaults.showHourNumbers)
+  const [showSecondIndices, setShowSecondIndices] = useState<boolean>(defaults.showSecondIndices)
+
   const contextValue: ClockSettingsContextType = {
     movementMethod,
     setMovementMethod,
@@ -112,6 +127,12 @@ export function ClockSettingsProvider({ children }: { children: React.ReactNode 
 
     volume,
     setVolume,
+
+    showHourNumbers,
+    setShowHourNumbers,
+
+    showSecondIndices,
+    setShowSecondIndices,
 
     minutesHand: {
       ...minutesHand,

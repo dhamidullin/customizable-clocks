@@ -17,3 +17,4 @@ docker compose down # to stop the project
 - Add background and clock hands color picker
 - Add clock face numbers
 - Add 12/24 hours format switcher
+- Deploy
